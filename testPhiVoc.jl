@@ -1,5 +1,6 @@
-using Test, DSP
-include("PhiVoc.jl")
+using Test, DSP, Revise
+includet("PhiVoc.jl")
+using .PhiVoc
 
 x = ones(100)
 xpeaks = [1,10,20,30]
@@ -19,7 +20,7 @@ y = sin.(2pi.*t./20)
 @test isapprox(pvocSingleFrame(y; nfft=1024, lag=256, window=hanning, npk=10)[1][1],0.05,rtol=1e-6)
 
 # test stft with defaults
-@test size(stft(y)) == (513, 5)
+@test size(PhiVoc.stft(y)) == (513, 5)
 
 # test stft amplitude
-@test isapprox(sum(abs.(stft(y)[:,2]).^2), .5, rtol=0.1)
+@test isapprox(sum(abs.(PhiVoc.stft(y)[:,2]).^2), .5, rtol=0.1)

@@ -1,5 +1,8 @@
+
+module PhiVoc
 using FFTW, DSP
 
+export findPeaks, highestNPeaks, pvocSignal, pvocSingleFrame
 
 function findPeaks(x)
 	pkmask = (x[1:end-2] .< x[2:end-1]) .& (x[3:end] .< x[2:end-1])
@@ -103,3 +106,4 @@ function pvocSignal(x; nfft::Integer=1024, lag::Integer=256, window::Union{Funct
 	end
 	(freqs, pows)
 end
+end # module

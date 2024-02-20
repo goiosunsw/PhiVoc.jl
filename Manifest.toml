@@ -2,7 +2,7 @@
 
 julia_version = "1.10.1"
 manifest_format = "2.0"
-project_hash = "a1548151d0d9ce30cc8fa5dfde567fc62df6a392"
+project_hash = "96e0a843039300cebd838a196aa1adb044736142"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -27,6 +27,12 @@ uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+
+[[deps.CodeTracking]]
+deps = ["InteractiveUtils", "UUIDs"]
+git-tree-sha1 = "c0216e792f518b39b22212127d4a84dc31e4e386"
+uuid = "da1fd8a2-8d9e-5ec2-8556-3022fb5608a2"
+version = "1.3.5"
 
 [[deps.Compat]]
 deps = ["TOML", "UUIDs"]
@@ -66,6 +72,10 @@ version = "0.7.9"
 [[deps.Dates]]
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
+
+[[deps.Distributed]]
+deps = ["Random", "Serialization", "Sockets"]
+uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
@@ -123,6 +133,12 @@ git-tree-sha1 = "7e5d6779a1e09a36db2a7b6cff50942a0a7d0fca"
 uuid = "692b3bcd-3c85-4b1f-b108-f13ce0eb3210"
 version = "1.5.0"
 
+[[deps.JuliaInterpreter]]
+deps = ["CodeTracking", "InteractiveUtils", "Random", "UUIDs"]
+git-tree-sha1 = "7b762d81887160169ddfc93a47e5fd7a6a3e78ef"
+uuid = "aa1ae85d-cabe-5617-a682-6adf51b2e16a"
+version = "0.9.29"
+
 [[deps.LazyArtifacts]]
 deps = ["Artifacts", "Pkg"]
 uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
@@ -177,6 +193,12 @@ version = "0.3.27"
 [[deps.Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
+[[deps.LoweredCodeUtils]]
+deps = ["JuliaInterpreter"]
+git-tree-sha1 = "20ce1091ba18bcdae71ad9b71ee2367796ba6c48"
+uuid = "6f1432cf-f94c-5a45-995e-cdbf5db27b0b"
+version = "2.4.4"
+
 [[deps.MKL_jll]]
 deps = ["Artifacts", "IntelOpenMP_jll", "JLLWrappers", "LazyArtifacts", "Libdl"]
 git-tree-sha1 = "72dc3cf284559eb8f53aa593fe62cb33f83ed0c0"
@@ -221,6 +243,11 @@ deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pk
 git-tree-sha1 = "13652491f6856acfd2db29360e1bbcd4565d04f1"
 uuid = "efe28fd5-8261-553b-a9e1-b2916fc3738e"
 version = "0.5.5+0"
+
+[[deps.OrderedCollections]]
+git-tree-sha1 = "dfdf5519f235516220579f949664f1bf44e741c5"
+uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+version = "1.6.3"
 
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
@@ -279,6 +306,18 @@ version = "1.3.4"
 git-tree-sha1 = "45e428421666073eab6f2da5c9d310d99bb12f9b"
 uuid = "189a3867-3050-52da-a836-e630ba90ab69"
 version = "1.2.2"
+
+[[deps.Requires]]
+deps = ["UUIDs"]
+git-tree-sha1 = "838a3a4188e2ded87a4f9f184b4b0d78a1e91cb7"
+uuid = "ae029012-a4dd-5104-9daa-d747884805df"
+version = "1.3.0"
+
+[[deps.Revise]]
+deps = ["CodeTracking", "Distributed", "FileWatching", "JuliaInterpreter", "LibGit2", "LoweredCodeUtils", "OrderedCollections", "Pkg", "REPL", "Requires", "UUIDs", "Unicode"]
+git-tree-sha1 = "12aa2d7593df490c407a3bbd8b86b8b515017f3e"
+uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
+version = "3.5.14"
 
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
