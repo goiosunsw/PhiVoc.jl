@@ -1,6 +1,6 @@
 
 module PhiVoc
-using FFTW, DSP
+using FFTW, DSP, StatsBase
 
 export findPeaks, highestNPeaks, pvocSignal, pvocSingleFrame
 
@@ -31,7 +31,14 @@ function framePairsToPeakFreqs(framePair, lag::Integer, npk::Integer)
 	nwrap = round.(cf.*lag)
 	# possible frequencies (different wrap factors possible in adjacent frames)
 	fopt = (dphi/2pi .+ nwrap .+ (-1:1)' )./lag
-	freqs = [fopt[ii, argmin(abs.(cf[ii].-fopt[ii,:]))] for ii in axes(fopt,1)]
+	freqs = zeros(size(fopt,1))
+	for ii in axes(fopt,1)
+		ff = fopt[ii, argmin(abs.(cf[ii].-fopt[ii,:]))] 
+		# FIXME: out of bounds are returned...
+		if (ff > 0) && (ff < 0.5)
+			freqs[ii] = ff
+		end
+	end
 	ampls = frav[pki]
 	(freqs, ampls, pki)
 end
@@ -94,6 +101,7 @@ function pvocSignal(x; nfft::Integer=1024, lag::Integer=256, window::Union{Funct
 	for ii in 1:nfr-1
 		framePair = sx[:,ii:ii+1]
 		f, p, ib = framePairsToPeakFreqs(framePair, lag, npk)
+
 		nf = length(f)
 		freqs[ii, 1:nf] = f
 		#pows[ii, 1:nf] = p./2
@@ -106,4 +114,57 @@ function pvocSignal(x; nfft::Integer=1024, lag::Integer=256, window::Union{Funct
 	end
 	(freqs, pows)
 end
+
+function sinusoidTracks(freqs, pows; mindist=0.10)
+	tracks = zeros(Int, size(freqs))
+
+	# initialise track numbers for first time index
+	tridx = 1
+	for pidx in axes(freqs,2)
+		if freqs[1,pidx] > 0
+			tracks[1,tridx] = tridx
+			tridx += 1
+		end
+	end
+
+	# Run through the remaining partials and match to previous frame
+	npart = lastindex(freqs,2)
+	for tidx in 2:lastindex(freqs, 1)
+		available = collect(1:npart)
+		for pidx in 1:npart 
+			dists = abs.(12 .* log2.(freqs[tidx-1,available] ./ freqs[tidx, pidx]))
+			imin = argmin(dists)
+			if (dists[imin] <= mindist) && (tracks[tidx-1,available[imin]] > 0)
+				tracks[tidx,pidx] = tracks[tidx-1, available[imin]]
+				filter!(x->(x!=imin), available)
+			else
+				tracks[tidx, pidx] = tridx
+				tridx += 1
+			end
+		end
+	end
+
+	tracks
+end
+
+struct SinusoidTrack
+	freqs::Vector{Float64}
+	powers::Vector{Float64}
+	startIndex::Integer
+end
+
+function trackNumbersToTracks(freqs, pows, tracknbrs; minlength=10)
+	ctr = countmap(tracknbrs)
+	tracks = []
+	for pno in keys(ctr)
+		if ctr[pno] > minlength
+			pmask = (tracknbrs.==pno)
+			push!(tracks, SinusoidTrack(freqs[pmask],
+			                            pows[pmask],
+										findfirst(any(pmask, dims=2))[1]))
+		end
+	end
+	tracks
+end
+
 end # module
