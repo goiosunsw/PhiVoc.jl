@@ -4,12 +4,26 @@ using FFTW, DSP, StatsBase
 
 export findPeaks, highestNPeaks, pvocSignal, pvocSingleFrame
 
-function findPeaks(x)
+"""
+	findPeaks(x::Vector{T}) where T <: Real
+
+Simple peak finder.
+
+Returns a mask vector (`Vector{Bool}`) of the same size of `x`
+where an element is true when the corresponding element of `x`
+is greater than its nearest neighbours
+"""
+function findPeaks(x::Vector{T}) where T <: Real
 	pkmask = (x[1:end-2] .< x[2:end-1]) .& (x[3:end] .< x[2:end-1])
 	pkmask = [false; pkmask; false]
 end
 
-function highestNPeaks(x; n=5)
+"""
+	highestNPeaks(x::Vector{t}; n::Int=5)::Vector{Int64} where T <: Real
+
+returns the index of the highest `n` peaks in x
+"""
+function highestNPeaks(x::Vector{T}; n::Int = 5)::Vector{Int64} where T <: Real
 	pmask = findPeaks(x)
 	pkIdx = findall(pmask)
 	n = min(n, length(pkIdx))
@@ -17,10 +31,17 @@ function highestNPeaks(x; n=5)
 	pkIdx[sortIdx[end:-1:end-n+1]]
 end
 
-function framePairsToPeakFreqs(framePair, lag::Integer, npk::Integer)
+"""
+	framePairsToPeakFreqs(framePair::Matrix{T}, lag::Integer, npk::Integer)::Tuple{Vector{Float64}, Vector{Float64}, Vector{Int64}} where {T<:Complex} 
+
+Calculates frequencies and amplitudes of the `npk` peak bins in the FFT
+`lag` is the number of samples separating the two frames
+Returns a tuple with `npk` frequencies, `npk` powers and `npk` indices into the FFT
+"""
+function framePairsToPeakFreqs(framePair::Matrix{T}, lag::Integer, npk::Integer)::Tuple{Vector{Float64}, Vector{Float64}, Vector{Int64}} where {T<:Complex} 
 	nfft = (size(framePair,1)-1)*2
 	# calculate average power spectrum for peak estimation
-	frav = sum((abs.(framePair)).^2, dims=2)
+	frav = vec(sum((abs.(framePair)).^2, dims=2))
 	# select highest peaks
 	pki = highestNPeaks(frav, n=npk)
 	# phase differences between frames
@@ -44,7 +65,26 @@ function framePairsToPeakFreqs(framePair, lag::Integer, npk::Integer)
 end
 	
 
-function pvocSingleFrame(x; nfft::Integer=1024, lag::Integer=256, window::Union{Function,Nothing}=nothing, npk::Integer=10)
+"""
+    pvocSingleFrame(x::Vector{T}; 
+					 nfft::Integer=1024, 
+					 lag::Integer=256, 
+					 window::Union{Function,Nothing}=nothing, 
+					 npk::Integer=10)::Tuple{Vector{Float64}, Vector{Float64}, Vector{Int64}} where {T<:Real}
+
+Calculates `npk` frequencies and powers of `npk` peak bins.
+The algorithm first separates signal `x` into 2 overlapping `nfft`-long frames.
+The distance between the 2 frames is `lag` samples.
+The frames are windowes using the `window` function.
+This function uses framePairsToPeakFreqs()
+
+Returns a tuple with `npk` frequencies, `npk` powers and `npk` indices into the FFT
+"""
+function pvocSingleFrame(x::Vector{T}; 
+						 nfft::Integer=1024, 
+						 lag::Integer=256, 
+						 window::Union{Function,Nothing}=nothing, 
+						 npk::Integer=10)::Tuple{Vector{Float64}, Vector{Float64}, Vector{Int64}} where {T<:Real}
 	# Nyquist frame (non-redundant spectrum)
 	inyq = nfft÷2+1
 	# pre-allocate frames
@@ -65,7 +105,12 @@ function pvocSingleFrame(x; nfft::Integer=1024, lag::Integer=256, window::Union{
 	framePairsToPeakFreqs(frames, lag, npk)
 end
 
-function stft(x;  nfft::Integer=1024, lag::Integer=256, window::Union{Function,Nothing}=nothing)
+"""
+    stft(x::Vector{T};  nfft::Integer=1024, lag::Integer=256, window::Union{Function,Nothing}=nothing)::Matrix{S} where {T<:Real, S<:Complex}
+
+Returns the complex-valued Short Term Fourier Transform of `x`
+"""
+function stft(x::Vector{T};  nfft::Integer=1024, lag::Integer=256, window::Union{Function,Nothing}=nothing) where {T<:Real}
 	nx = length(x)
 	if !isnothing(window)
 		win = window(nfft)
@@ -92,7 +137,20 @@ function stft(x;  nfft::Integer=1024, lag::Integer=256, window::Union{Function,N
 	sx./wsum
 end
 
-function pvocSignal(x; nfft::Integer=1024, lag::Integer=256, window::Union{Function,Nothing}=nothing, npk::Integer=10)
+"""
+    pvocSignal(x::Vector{T}; 
+	                nfft::Integer=1024, 
+					lag::Integer=256, 
+					window::Union{Function,Nothing}=nothing, 
+					npk::Integer=10)::Tuple{Matrix{Float64}, Matrix{Float64}}
+
+Returns normalised frequencies and powers of `npk` peak bins along time for signal `x`
+"""
+function pvocSignal(x::Vector{T}; 
+	                nfft::Integer=1024, 
+					lag::Integer=256, 
+					window::Union{Function,Nothing}=nothing, 
+					npk::Integer=10)::Tuple{Matrix{Float64}, Matrix{Float64}} where {T<:Real}
 	sx = stft(x, nfft=nfft, lag=lag, window=window)
 	nfr = size(sx,2)
 	freqs = zeros(nfr-1, npk)
@@ -115,6 +173,15 @@ function pvocSignal(x; nfft::Integer=1024, lag::Integer=256, window::Union{Funct
 	(freqs, pows)
 end
 
+"""
+    sinusoidTracks(freqs, pows; mindist=0.10)
+
+From frequencies and powers output of `pvocSignal`, this tags
+nearby frequency tracks so that they form a sinusoid track.
+
+Returns an Integer matrix with the shape of `freqs` containing IDs 
+for samples belonging to the same track
+"""
 function sinusoidTracks(freqs, pows; mindist=0.10)
 	tracks = zeros(Int, size(freqs))
 
@@ -155,9 +222,16 @@ struct SinusoidTrack
 	startIndex::Integer
 end
 
+"""
+    trackNumbersToTracks(freqs, pows, tracknbrs; minlength=10)
+
+Converts pvocSignal's frequencies ans power matrices to a vector
+of individual tracks.
+`minlength` is the minimum length in samples of a track
+"""
 function trackNumbersToTracks(freqs, pows, tracknbrs; minlength=10)
 	ctr = countmap(tracknbrs)
-	tracks = []
+	tracks = SinusoidTrack[]
 	for pno in keys(ctr)
 		if (ctr[pno] > minlength) && (pno > 0)
 			pmask = (tracknbrs.==pno)
