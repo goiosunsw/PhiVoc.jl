@@ -138,8 +138,10 @@ function sinusoidTracks(freqs, pows; mindist=0.10)
 				tracks[tidx,pidx] = tracks[tidx-1, available[imin]]
 				filter!(x->(x!=imin), available)
 			else
-				tracks[tidx, pidx] = tridx
-				tridx += 1
+				if freqs[tidx-1, pidx] > 0.0
+					tracks[tidx, pidx] = tridx
+					tridx += 1
+				end
 			end
 		end
 	end
@@ -157,7 +159,7 @@ function trackNumbersToTracks(freqs, pows, tracknbrs; minlength=10)
 	ctr = countmap(tracknbrs)
 	tracks = []
 	for pno in keys(ctr)
-		if ctr[pno] > minlength
+		if (ctr[pno] > minlength) && (pno > 0)
 			pmask = (tracknbrs.==pno)
 			push!(tracks, SinusoidTrack(freqs[pmask],
 			                            pows[pmask],
