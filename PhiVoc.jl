@@ -2,7 +2,7 @@
 module PhiVoc
 using FFTW, DSP, StatsBase
 
-export findPeaks, highestNPeaks, pvocSignal, pvocSingleFrame
+export findPeaks, highestNPeaks, pvocSignal, pvocSingleFrame, SinusoidTrack, sinusoidTracks, trackNumbersToTracks
 
 """
 	findPeaks(x::Vector{T}) where T <: Real
@@ -56,7 +56,7 @@ function framePairsToPeakFreqs(framePair::Matrix{T}, lag::Integer, npk::Integer)
 	for ii in axes(fopt,1)
 		ff = fopt[ii, argmin(abs.(cf[ii].-fopt[ii,:]))] 
 		# FIXME: out of bounds are returned...
-		if (ff > 0) && (ff < 0.5)
+		if (ff > 0.0) && (ff < 0.5)
 			freqs[ii] = ff
 		end
 	end
@@ -233,11 +233,14 @@ function trackNumbersToTracks(freqs, pows, tracknbrs; minlength=10)
 	ctr = countmap(tracknbrs)
 	tracks = SinusoidTrack[]
 	for pno in keys(ctr)
-		if (ctr[pno] > minlength) && (pno > 0)
+		if (ctr[pno] > minlength) && (pno > 0) 
 			pmask = (tracknbrs.==pno)
-			push!(tracks, SinusoidTrack(freqs[pmask],
-			                            pows[pmask],
-										findfirst(any(pmask, dims=2))[1]))
+			track_tidx = sort(findall(vec(any(pmask, dims=2))))
+			f = [freqs[ti, findfirst(pmask[ti,:])] for ti in track_tidx]
+			p = [pows[ti, findfirst(pmask[ti,:])] for ti in track_tidx]
+			push!(tracks, SinusoidTrack(f,
+			                            p,
+										(track_tidx[1])))
 		end
 	end
 	tracks
