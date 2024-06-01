@@ -1,6 +1,5 @@
-using Test, DSP, Revise
-includet("PhiVoc.jl")
-using .PhiVoc
+using Test, DSP
+using PhiVoc
 
 x = ones(100)
 xpeaks = [1,10,20,30]
