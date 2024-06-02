@@ -2,5 +2,8 @@ using PhiVoc
 using Test
 
 @testset "PhiVoc.jl" begin
-    # Write your tests here.
+    include("testPhaseVocoder.jl")
+end
+@testset "PhiVoc.jl" begin
+    include("testYin.jl")
 end

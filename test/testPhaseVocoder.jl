@@ -1,5 +1,5 @@
 using Test, DSP
-using PhiVoc
+using PhiVoc.PhaseVocoder
 
 x = ones(100)
 xpeaks = [1,10,20,30]

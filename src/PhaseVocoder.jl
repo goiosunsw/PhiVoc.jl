@@ -1,5 +1,5 @@
 
-module PhiVoc
+module PhaseVocoder
 using FFTW, DSP, StatsBase
 
 export findPeaks, highestNPeaks, pvocSignal, pvocSingleFrame, SinusoidTrack, sinusoidTracks, trackNumbersToTracks
@@ -146,7 +146,7 @@ end
 
 Returns normalised frequencies and powers of `npk` peak bins along time for signal `x`
 """
-function pvocSignal(x::Vector{T}; 
+function pvoc(x::Vector{T}; 
 	                nfft::Integer=1024, 
 					lag::Integer=256, 
 					window::Union{Function,Nothing}=nothing, 
