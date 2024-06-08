@@ -3,6 +3,26 @@ module Yin
 # includes
 using FFTW, DSP, PaddedViews
 
+struct YinParams
+    fs::Real
+    fmin::Real
+    fmax::Real
+    nwind::Int
+    nhop::Int
+    threshold::Real
+    fast::Bool
+    minLag::Int
+    maxLag::Int
+end
+
+function YinParams(fs::Real; fmin::Real=50, fmax::Real=4000, 
+    threshold::Real=.1, nwind::Int=2048, nhop::Int=-1, fast::Bool=true)
+    if nhop < 0
+        nhop = nwind ÷ 2
+    end
+    YinParams(fs, fmin, fmax, nwind, nhop, threshold, fast, floor(fs/fmax), ceil(fs/fmin))
+end
+
 function AMDFtd(x, maxLag)
     n = length(x)
     maxLag = min(maxLag, n)
@@ -67,6 +87,33 @@ function parabolicInterp(v::Vector, idx::Integer)
         vi = a * di^2 +b * di + vc
     end
     (idx+di, vi)
+end
+
+function yinFrame(frame::Vector{<: Number}, params::YinParams)
+    camdf = NormCumAMDF(frame, params.maxLag)
+    lag = findFirstMinimum(camdf, params.threshold)
+    if lag <= 0
+        return (-1, minimum(camdf))
+    end
+    (fineLag, val) = parabolicInterp(camdf, lag)
+    (fineLag/params.fs, val)
+end
+
+function yin(x, params)
+    startIdx = 1:params.nhop:(length(x)-params.nwind)
+    nFrames = length(startIdx)
+    freqs = Vector{Union{Missing,Float64}}(undef, nFrames)
+    vals = zeros(nFrames)
+    for (ii, stIdx) in enumerate(startIdx)
+        frame = x[stIdx:stIdx+params.nwind]
+        (lag, val) = yinFrame(frame, params)
+        if lag > 0
+            freqs[ii] = 1/lag
+        end
+        vals[ii] = val
+    end
+    (freqs, vals)
+
 end
 
 end # module Yin
