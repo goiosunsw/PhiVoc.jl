@@ -20,5 +20,6 @@ y = [1.,.5,.2,.1,.05,.01,.05]
 # yin params
 @test PhiVoc.Yin.YinParams(1000.0).maxLag == 20
 # yin for single frame
-@test PhiVoc.Yin.yinFrame(randn(1024))[1] == -1
+params = PhiVoc.Yin.YinParams(1000.0)
+@test PhiVoc.Yin.yinFrame(randn(1024),params)[1] == -1
 
